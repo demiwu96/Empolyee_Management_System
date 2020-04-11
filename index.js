@@ -160,10 +160,82 @@ const viewAll = tableName => {
 //     });
 // };
 
-// const addRoles = () => {
+const addRoles = () => {
+    connection.query("SELECT * FROM department", function (err, result) {
+        if (err) throw err;
+        inquirer
+            .prompt([
+                {
+                    name: "roleTitle",
+                    message: "Enter the role title: "
+                },
+                {
+                    type: "number",
+                    name: "salary",
+                    message: "Enter the salary for this role: "
+                },
+                {
+                    type: "rawlist",
+                    name: "chooseDepartment",
+                    message: "Which department is this person in?",
+                    choices: function () {
+                        var choiceArray = [];
+                        for (var i = 0; i < result.length; i++) {
+                            choiceArray.push(result[i].department_name);
+                        }
+                        return choiceArray;
+                    },
+                }
+            ])
+            .then(res => {
+                var chosen;
+                for (var i = 0; i < result.length; i++) {
+                    if (result[i].department_name === res.chooseDepartment) {
+                        chosen = result[i];
+                    }
+                }
 
-// }
+                var query = connection.query(
+                    "INSERT INTO role SET ?",
+                    {
+                        title: res.roleTitle,
+                        salary: res.salary,
+                        department_id: chosen.id
+                    },
+                    function (err, res) {
+                        if (err) throw err;
+                        console.log('Successfully added!');
+                        console.log("------------------------------------------------------------");
+                        startSystem();
+                    }
+                );
+            })
+            .catch(err => {
+                if (err) {
+                    console.log(err);
+                };
+            });
+    });
+};
 
-// const addDepartments = () => {
-
-// }
+const addDepartments = () => {
+    inquirer
+        .prompt({
+            name: "departmentName",
+            message: "Enter the department name: "
+        })
+        .then(res => {
+            var query = connection.query(
+                "INSERT INTO department SET ?",
+                {
+                    department_name: res.departmentName
+                },
+                function (err, res) {
+                    if (err) throw err;
+                    console.log("Successfully added");
+                    console.log("------------------------------------------------------------");
+                    startSystem();
+                }
+            );
+        });
+}
