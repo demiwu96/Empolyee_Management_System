@@ -4,8 +4,8 @@
 
 ## Installation
 * npm required:
-    * [inquirer]()
-    * [mysql]()
+    * [inquirer](https://www.npmjs.com/package/inquirer)
+    * [mysql](https://www.npmjs.com/package/mysql)
 
 ## Built with
 * JavaScript

@@ -23,7 +23,7 @@ const startSystem = () => {
             name: "options",
             choices: [
                 "View All Employees",
-                // "View All Employees By Department",
+                "View All Employees By Department",
                 // "View All Employees By Manager",
                 "Add Employees",
                 // "Remove Employees",
@@ -40,6 +40,10 @@ const startSystem = () => {
             switch (res.options) {
                 case "View All Employees":
                     viewAll("employee");
+                    break;
+
+                case "View All Employees By Department":
+                    viewByDepartment();
                     break;
 
                 case "Add Employees":
@@ -99,7 +103,7 @@ const viewAll = tableName => {
             break;
 
         case "department":
-            connection.query("SELECT * FROM " + tableName, (err, res) => {
+            connection.query("SELECT * FROM department", (err, res) => {
                 if (err) throw err;
                 console.log("\n");
                 console.table(res);
@@ -108,6 +112,45 @@ const viewAll = tableName => {
             });
             break;
     }
+};
+
+const viewByDepartment = () => {
+    connection.query("SELECT * FROM department", function (err, result) {
+        if (err) throw err;
+        inquirer
+            .prompt(
+                {
+                    type: "rawlist",
+                    name: "chooseDepartment",
+                    message: "Which department?",
+                    choices: function () {
+                        var choiceArray = [];
+                        for (var i = 0; i < result.length; i++) {
+                            choiceArray.push(result[i].department_name);
+                        }
+                        return choiceArray;
+                    },
+                })
+            .then(res => {
+                var chosen;
+                for (var i = 0; i < result.length; i++) {
+                    if (result[i].department_name === res.chooseDepartment) {
+                        chosen = result[i];
+                    }
+                }
+                console.log(chosen.id);
+                var query = connection.query(
+                    "SELECT employee.id, employee.first_name, employee.last_name,department.department_name, role.title, role.salary FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id WHERE department.id = ?",
+                    [chosen.id], function (err, res) {
+                        if (err) throw err;
+                        console.log("\n");
+                        console.table(res);
+                        console.log("------------------------------------------------------------");
+                        startSystem();
+                    }
+                );
+            });
+    });
 };
 
 // const addEmployees = () => {
