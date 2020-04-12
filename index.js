@@ -28,7 +28,7 @@ const startSystem = () => {
                 "Add Employees",
                 // "Remove Employees",
                 "Update Employee Role",
-                // "Update Employee Manager",
+                "Update Employee Manager",
                 "View All Roles",
                 "Add Roles",
                 "View All Departments",
@@ -86,10 +86,9 @@ const viewAll = tableName => {
     switch (tableName) {
         case "employee":
             // get employee information from database
-            query = "SELECT employee.id, employee.first_name, employee.last_name,department_name, role.title, role.salary FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id"
+            query = "SELECT employee.id, employee.first_name, employee.last_name,department_name, role.title, role.salary FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id ORDER BY id"
             connection.query(query, (err, res) => {
                 if (err) throw err;
-                console.log("\n");
                 console.table(res);
                 console.log("========================================================================================");
                 startSystem();
@@ -101,7 +100,6 @@ const viewAll = tableName => {
             query = "SELECT role.id,role.title, department.department_name FROM role JOIN department ON role.department_id = department.id ORDER BY role.id"
             connection.query(query, (err, res) => {
                 if (err) throw err;
-                console.log("\n");
                 console.table(res);
                 console.log("========================================================================================");
                 startSystem();
@@ -112,7 +110,6 @@ const viewAll = tableName => {
             // get department information from database
             connection.query("SELECT * FROM department", (err, res) => {
                 if (err) throw err;
-                console.log("\n");
                 console.table(res);
                 console.log("========================================================================================");
                 startSystem();
@@ -128,7 +125,7 @@ const viewByDepartment = () => {
         inquirer
             .prompt(
                 {
-                    type: "rawlist",
+                    type: "list",
                     name: "chooseDepartment",
                     message: "Which department?",
                     choices: function () {
@@ -151,7 +148,6 @@ const viewByDepartment = () => {
                     "SELECT employee.id, employee.first_name, employee.last_name,department.department_name, role.title, role.salary FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id WHERE department.id = ?",
                     [chosen.id], function (err, res) {
                         if (err) throw err;
-                        console.log("\n");
                         console.table(res);
                         console.log("========================================================================================");
                         startSystem();
@@ -196,7 +192,9 @@ const addEmployees = () => {
                         choices: function () {
                             var choiceManager = [];
                             for (var i = 0; i < resultE.length; i++) {
-                                choiceManager.push(resultE[i].first_name + " " + resultE[i].last_name);
+                                if (resultE[i].manager_or_not == 1) {
+                                    choiceManager.push(resultE[i].first_name + " " + resultE[i].last_name);
+                                }
                             }
                             return choiceManager;
                         },
@@ -250,7 +248,7 @@ const updateEmployeeRole = () => {
             inquirer
                 .prompt([
                     {
-                        type: "rawlist",
+                        type: "list",
                         name: "chooseEmployee",
                         message: "Which empolyee needs to be updated?",
                         choices: function () {
@@ -262,7 +260,7 @@ const updateEmployeeRole = () => {
                         },
                     },
                     {
-                        type: "rawlist",
+                        type: "list",
                         name: "chooseRole",
                         message: "What is this person's new role?",
                         choices: function () {
@@ -313,8 +311,77 @@ const updateEmployeeRole = () => {
 };
 
 const updateEmployeeManager = () => {
-    console.log("Coming soon...");
-}
+    connection.query("SELECT * FROM employee WHERE manager_or_not = 1", function (err, resultM) {
+        if (err) throw err;
+        connection.query("SELECT * FROM employee", function (err, resultE) {
+            if (err) throw err;
+            inquirer
+                .prompt([
+                    {
+                        type: "list",
+                        name: "chooseEmployee",
+                        message: "Which empolyee needs to be updated?",
+                        choices: function () {
+                            var choiceEmployee = [];
+                            for (var i = 0; i < resultE.length; i++) {
+                                choiceEmployee.push(resultE[i].first_name + " " + resultE[i].last_name);
+                            }
+                            return choiceEmployee;
+                        },
+                    },
+                    {
+                        type: "list",
+                        name: "chooseManager",
+                        message: "Who will be the new manager of this employee?",
+                        choices: function () {
+                            var choiceManager = [];
+                            for (var i = 0; i < resultM.length; i++) {
+                                choiceManager.push(resultM[i].first_name + " " + resultM[i].last_name);
+                            }
+                            return choiceManager;
+                        },
+                    },
+                ])
+                .then(res => {
+                    console.log(res.chooseEmployee);
+                    console.log(res.chooseManager);
+                    // get empolyee information from database
+                    let nameE = res.chooseEmployee.split(" ");
+                    let chosenE;
+                    for (var i = 0; i < resultE.length; i++) {
+                        if (resultE[i].first_name === nameE[0]) {
+                            chosenE = resultE[i];
+                        }
+                    };
+                    // get manager information from database
+                    let nameM = res.chooseManager.split(" ");
+                    let chosenM;
+                    for (var i = 0; i < resultM.length; i++) {
+                        if (resultM[i].first_name === nameM[0]) {
+                            chosenM = resultM[i];
+                        }
+                    };
+                    console.log(chosenM.id);
+                    // update manager information
+                    connection.query(
+                        "UPDATE employee SET ? WHERE ?",
+                        [{
+                            manager_id: chosenM.id
+                        },
+                        {
+                            id: chosenE.id
+                        }],
+                        function (err, res) {
+                            if (err) throw err;
+                            console.log('Successfully added!');
+                            console.log("--------------------------------------------------------------------------");
+                            startSystem();
+                        }
+                    );
+                });
+        });
+    });
+};
 
 const addRoles = () => {
     connection.query("SELECT * FROM department", function (err, result) {
@@ -332,7 +399,7 @@ const addRoles = () => {
                     message: "Enter the salary for this position: "
                 },
                 {
-                    type: "rawlist",
+                    type: "list",
                     name: "chooseDepartment",
                     message: "Which department is this position in?",
                     choices: function () {
