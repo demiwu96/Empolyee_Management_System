@@ -161,55 +161,85 @@ const viewByDepartment = () => {
     });
 };
 
-// const addEmployees = () => {
-//     connection.query("SELECT * FROM roles", function (err, result) {
-//         if (err) throw err;
-//         inquirer
-//             .prompt([
-//                 {
-//                     name: "firstName",
-//                     message: "Enter the employee's first name: "
-//                 },
-//                 {
-//                     name: "lastName",
-//                     message: "Enter the employee's last name: "
-//                 },
-//                 {
-//                     type: "list",
-//                     name: "role",
-//                     message: "What is the employee's role?",
-//                     choices: function () {
-//                         var choiceArray = [];
-//                         for (var i = 0; i < result.length; i++) {
-//                             choiceArray.push(result[i].title);
-//                         }
-//                         return choiceArray;
-//                     },
-//                 },
-//                 {
-//                     name: "manager",
-//                     message: "Who is the manager of this employee?"
-//                 }
-//             ])
-//             .then(res => {
-//                 var query = connection.query(
-//                     "INSERT INTO employee SET ?",
-//                     {
-//                         first_name: res.firstName,
-//                         last_name: res.lastName,
-//                         role_id: ,
-//                         manager_id:,
-//                     },
-//                     function (err, res) {
-//                         if (err) throw err;
-//                         console.log(`${res.firstName} ${res.lastName} added`);
-//                         console.log("------------------------------------------------------------");
-//                     }
-//                 );
-//             });
+const addEmployees = () => {
+    connection.query("SELECT * FROM employee", function (err, resultE) {
+        if (err) throw err;
+        connection.query("SELECT * FROM role", function (err, resultR) {
+            if (err) throw err;
+            // promt the user for new employee information
+            inquirer
+                .prompt([
+                    {
+                        name: "firstName",
+                        message: "Enter the employee's first name: "
+                    },
+                    {
+                        name: "lastName",
+                        message: "Enter the employee's last name: "
+                    },
+                    {
+                        type: "list",
+                        name: "chooseRole",
+                        message: "What is the employee's role?",
+                        choices: function () {
+                            var choiceRole = [];
+                            for (var i = 0; i < resultR.length; i++) {
+                                choiceRole.push(resultR[i].title);
+                            }
+                            return choiceRole;
+                        },
+                    },
+                    {
+                        type: "list",
+                        name: "choosemanager",
+                        message: "Who is the manager of this employee?",
+                        choices: function () {
+                            var choiceManager = [];
+                            for (var i = 0; i < resultE.length; i++) {
+                                choiceManager.push(resultE[i].first_name + " " + resultE[i].last_name);
+                            }
+                            return choiceManager;
+                        },
+                    }
+                ])
+                .then(res => {
+                    // get role through matching name from the database
+                    let chosenR;
+                    for (var i = 0; i < resultR.length; i++) {
+                        if (resultR[i].title === res.chooseRole) {
+                            chosenR = resultR[i];
+                        }
+                    };
+                    // get manager through matching first name from the database
+                    let nameArr = res.choosemanager.split(" ");
+                    let chosenM;
+                    for (var i = 0; i < resultE.length; i++) {
+                        if (resultE[i].first_name === nameArr[0]) {
+                            chosenM = resultE[i];
+                        }
+                    };
 
-//     });
-// };
+                    // add the new employee information into database
+                    connection.query(
+                        "INSERT INTO employee SET ?",
+                        {
+                            first_name: res.firstName,
+                            last_name: res.lastName,
+                            role_id: chosenR.id,
+                            manager_id: chosenM.id,
+                        },
+                        function (err, res) {
+                            if (err) throw err;
+                            console.log("New empolyee added!");
+                            console.log("------------------------------------------------------------");
+                            startSystem();
+                        }
+                    );
+                });
+
+        });
+    });
+};
 
 const updateEmployeeRole = () => {
     connection.query("SELECT * FROM employee", function (err, resultE) {
@@ -281,6 +311,10 @@ const updateEmployeeRole = () => {
     });
 
 };
+
+const updateEmployeeManager = () => {
+    console.log("Coming soon...");
+}
 
 const addRoles = () => {
     connection.query("SELECT * FROM department", function (err, result) {
