@@ -16,6 +16,7 @@ connection.connect(function (err) {
 });
 
 const startSystem = () => {
+    // prompt for things that user can do 
     inquirer
         .prompt({
             type: "rawlist",
@@ -40,6 +41,7 @@ const startSystem = () => {
             ]
         })
         .then(function (res) {
+            // based on user's choice, execute different functions
             switch (res.options) {
                 case "View All Employees":
                     viewAll("employee");
@@ -166,7 +168,7 @@ const viewByDepartment = () => {
                         chosen = result[i];
                     }
                 }
-                // get the employee information in the chosen department
+                // get all employees in the chosen department through department id
                 connection.query(
                     "SELECT employee.id, employee.first_name, employee.last_name,department.department_name, role.title, role.salary FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id WHERE department.id = ?",
                     [chosen.id], function (err, res) {
@@ -183,6 +185,7 @@ const viewByDepartment = () => {
 const viewByManager = () => {
     connection.query("SELECT * FROM employee WHERE manager_or_not = 1", function (err, resultM) {
         if (err) throw err;
+        // prompt user for manager name
         inquirer
             .prompt(
                 {
@@ -199,6 +202,7 @@ const viewByManager = () => {
                 },
             )
             .then(res => {
+                // get manager information from database
                 let nameM = res.chooseManager.split(" ");
                 let chosenM;
                 for (var i = 0; i < resultM.length; i++) {
@@ -206,6 +210,7 @@ const viewByManager = () => {
                         chosenM = resultM[i];
                     }
                 };
+                // show all employees with id of the chosen manager
                 connection.query(
                     "SELECT employee.id, employee.first_name, employee.last_name, role.title FROM employee JOIN role ON employee.role_id = role.id WHERE manager_id = ?",
                     [chosenM.id], function (err, res) {
@@ -383,6 +388,7 @@ const updateEmployeeManager = () => {
         if (err) throw err;
         connection.query("SELECT * FROM employee", function (err, resultE) {
             if (err) throw err;
+            // prompt for employee and manager nformation for updating
             inquirer
                 .prompt([
                     {
@@ -546,6 +552,7 @@ const deleteEmployee = () => {
                     },
                 })
             .then(res => {
+                // get employee information from database
                 let nameArr = res.chooseEmployee.split(" ");
                 let chosenE;
                 for (var i = 0; i < resultE.length; i++) {
@@ -645,12 +652,14 @@ const utilizedBudget = () => {
                 },
             })
             .then(res => {
+                // get department data from database
                 var chosenD;
                 for (var i = 0; i < resultD.length; i++) {
                     if (resultD[i].department_name === res.chooseDepartment) {
                         chosenD = resultD[i];
                     }
                 };
+                // get the sum of salary through department id
                 connection.query(
                     "SELECT SUM(salary) FROM role WHERE department_id = ?",
                     [chosenD.id], function (err, res) {
