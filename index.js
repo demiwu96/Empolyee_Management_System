@@ -35,7 +35,7 @@ const startSystem = () => {
                 "View All Departments",
                 "Add Department",
                 "Delete Department",
-                "View Budget of Department",
+                "View utilized Budget of Departments",
                 "Exit"
             ]
         })
