@@ -35,6 +35,7 @@ const startSystem = () => {
                 "View All Departments",
                 "Add Department",
                 "Delete Department",
+                "View Budget of Department",
                 "Exit"
             ]
         })
@@ -57,7 +58,7 @@ const startSystem = () => {
                     break;
 
                 case "Delete Employee":
-                    deleteData("employee");
+                    deleteEmployee();
                     break;
 
                 case "Update Employee Role":
@@ -77,7 +78,7 @@ const startSystem = () => {
                     break;
 
                 case "Delete Role":
-                    deleteData("role");
+                    deleteRole();
                     break;
 
                 case "View All Departments":
@@ -89,7 +90,11 @@ const startSystem = () => {
                     break;
 
                 case "Delete Department":
-                    deleteData("department");
+                    deleteDepartment();
+                    break;
+
+                case "View utilized Budget of Departments":
+                    utilizedBudget();
                     break;
 
                 default:
@@ -104,7 +109,7 @@ const viewAll = tableName => {
     switch (tableName) {
         case "employee":
             // get employee information from database
-            query = "SELECT employee.id, employee.first_name, employee.last_name,department_name, role.title, role.salary FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id ORDER BY id"
+            query = "SELECT employee.id, employee.first_name, employee.last_name,employee.manager_id, department_name, role.title, role.salary FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id ORDER BY id"
             connection.query(query, (err, res) => {
                 if (err) throw err;
                 console.table(res);
@@ -326,7 +331,13 @@ const updateEmployeeRole = () => {
                             }
                             return choiceArray;
                         },
-                    }])
+                    },
+                    {
+                        type: "confirm",
+                        name: "managerOrNot",
+                        message: "Is this person a manager?"
+                    },
+                ])
                 .then(res => {
                     // get employee data through matching first name from the database
                     let nameArr = res.chooseEmployee.split(" ");
@@ -348,7 +359,8 @@ const updateEmployeeRole = () => {
                         "UPDATE employee SET ? WHERE ? ",
                         [
                             {
-                                role_id: chosenR.id
+                                role_id: chosenR.id,
+                                manager_or_not: res.managerOrNot
                             },
                             {
                                 id: chosenE.id
@@ -515,107 +527,140 @@ const addDepartment = () => {
         });
 }
 
-const deleteData = (tableName) => {
-    var query;
-    switch (tableName) {
-        case "employee":
-            connection.query("SELECT * FROM employee", function (err, resultE) {
-                if (err) throw err;
-                // prompt for the employee name
-                inquirer
-                    .prompt(
-                        {
-                            type: "list",
-                            name: "chooseEmployee",
-                            message: "Which empolyee needs to be updated?",
-                            choices: function () {
-                                var choiceArray = [];
-                                for (var i = 0; i < resultE.length; i++) {
-                                    choiceArray.push(resultE[i].first_name + " " + resultE[i].last_name);
-                                }
-                                return choiceArray;
-                            },
-                        })
-                    .then(res => {
-                        let nameArr = res.chooseEmployee.split(" ");
-                        let chosenE;
+const deleteEmployee = () => {
+    connection.query("SELECT * FROM employee", function (err, resultE) {
+        if (err) throw err;
+        // prompt for the employee name
+        inquirer
+            .prompt(
+                {
+                    type: "list",
+                    name: "chooseEmployee",
+                    message: "Which empolyee needs to be updated?",
+                    choices: function () {
+                        var choiceArray = [];
                         for (var i = 0; i < resultE.length; i++) {
-                            if (resultE[i].first_name === nameArr[0]) {
-                                chosenE = resultE[i];
-                            }
-                        };
-                        // delete employee from database
-                        connection.query(
-                            "DELETE FROM employee WHERE id =? ", [chosenE.id], function (err, res) {
-                                if (err) throw err;
-                                console.log('Successfully deleted!!');
-                                console.log("--------------------------------------------------------------------------");
-                                startSystem();
-                            });
-                    });
-            });
-            break;
-
-        case "role":
-            connection.query("SELECT * FROM role", function (err, resultR) {
-                if (err) throw err;
-                // prompt for the role name
-                inquirer
-                    .prompt(
-                        {
-                            type: "list",
-                            name: "chooseRole",
-                            message: "What is the employee's role?",
-                            choices: function () {
-                                var choiceRole = [];
-                                for (var i = 0; i < resultR.length; i++) {
-                                    choiceRole.push(resultR[i].title);
-                                }
-                                return choiceRole;
-                            },
-                        })
-                    .then(res => {
-                        // delete role information from database
-                        connection.query(
-                            "DELETE FROM role WHERE title = ?", [res.chooseRole], function (err, res) {
-                                if (err) throw err;
-                                console.log('Successfully deleted!!');
-                                console.log("--------------------------------------------------------------------------");
-                                startSystem();
-                            });
-                    });
-            });
-            break;
-
-        case "department":
-            connection.query("SELECT * FROM department", function (err, resultD) {
-                if (err) throw err;
-                // prompt for the department name
-                inquirer
-                    .prompt(
-                        {
-                            type: "list",
-                            name: "chooseDepartment",
-                            message: "Which department do you want to delete?",
-                            choices: function () {
-                                var choiceArray = [];
-                                for (var i = 0; i < resultD.length; i++) {
-                                    choiceArray.push(resultD[i].department_name);
-                                }
-                                return choiceArray;
-                            },
+                            choiceArray.push(resultE[i].first_name + " " + resultE[i].last_name);
                         }
-                    )
-                    .then(res => {
-                        // delete department information from database
-                        connection.query("DELETE FROM department WHERE department_name = ?", [res.chooseDepartment], (err, res) => {
-                            if (err) throw err;
-                            console.log("Successfully deleted!!");
-                            console.log("--------------------------------------------------------------------------");
-                            startSystem();
-                        });
+                        return choiceArray;
+                    },
+                })
+            .then(res => {
+                let nameArr = res.chooseEmployee.split(" ");
+                let chosenE;
+                for (var i = 0; i < resultE.length; i++) {
+                    if (resultE[i].first_name === nameArr[0]) {
+                        chosenE = resultE[i];
+                    }
+                };
+                // delete employee from database
+                connection.query(
+                    "DELETE FROM employee WHERE id =? ", [chosenE.id], function (err, res) {
+                        if (err) throw err;
+                        console.log('Successfully deleted!!');
+                        console.log("--------------------------------------------------------------------------");
+                        startSystem();
                     });
             });
-            break;
-    };
+    });
+}
+
+const deleteRole = () => {
+    connection.query("SELECT * FROM role", function (err, resultR) {
+        if (err) throw err;
+        // prompt for the role name
+        inquirer
+            .prompt(
+                {
+                    type: "list",
+                    name: "chooseRole",
+                    message: "What is the employee's role?",
+                    choices: function () {
+                        var choiceRole = [];
+                        for (var i = 0; i < resultR.length; i++) {
+                            choiceRole.push(resultR[i].title);
+                        }
+                        return choiceRole;
+                    },
+                })
+            .then(res => {
+                // delete role information from database
+                connection.query(
+                    "DELETE FROM role WHERE title = ?", [res.chooseRole], function (err, res) {
+                        if (err) throw err;
+                        console.log('Successfully deleted!!');
+                        console.log("--------------------------------------------------------------------------");
+                        startSystem();
+                    });
+            });
+    });
+}
+
+const deleteDepartment = () => {
+    connection.query("SELECT * FROM department", function (err, resultD) {
+        if (err) throw err;
+        // prompt for the department name
+        inquirer
+            .prompt(
+                {
+                    type: "list",
+                    name: "chooseDepartment",
+                    message: "Which department do you want to delete?",
+                    choices: function () {
+                        var choiceArray = [];
+                        for (var i = 0; i < resultD.length; i++) {
+                            choiceArray.push(resultD[i].department_name);
+                        }
+                        return choiceArray;
+                    },
+                }
+            )
+            .then(res => {
+                // delete department information from database
+                connection.query("DELETE FROM department WHERE department_name = ?", [res.chooseDepartment], (err, res) => {
+                    if (err) throw err;
+                    console.log("Successfully deleted!!");
+                    console.log("--------------------------------------------------------------------------");
+                    startSystem();
+                });
+            });
+    });
+}
+
+const utilizedBudget = () => {
+    connection.query("SELECT * FROM department", function (err, resultD) {
+        if (err) throw err;
+        // prompt the user for the department 
+        inquirer
+            .prompt({
+                type: "list",
+                name: "chooseDepartment",
+                message: "Which department do you want to view?",
+                choices: function () {
+                    var choiceArray = [];
+                    for (var i = 0; i < resultD.length; i++) {
+                        choiceArray.push(resultD[i].department_name);
+                    }
+                    return choiceArray;
+                },
+            })
+            .then(res => {
+                var chosenD;
+                for (var i = 0; i < resultD.length; i++) {
+                    if (resultD[i].department_name === res.chooseDepartment) {
+                        chosenD = resultD[i];
+                    }
+                };
+                connection.query(
+                    "SELECT SUM(salary) FROM role WHERE department_id = ?",
+                    [chosenD.id], function (err, res) {
+                        if (err) throw err;
+                        console.log(`The total utilized budget of ${chosenD.department_name} department: $${res[0]['SUM(salary)']}`);
+                        console.log("--------------------------------------------------------------------------");
+                        startSystem();
+                    }
+                );
+
+            });
+    });
 };
