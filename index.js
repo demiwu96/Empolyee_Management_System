@@ -36,7 +36,7 @@ const startSystem = () => {
                 "View All Departments",
                 "Add Department",
                 "Delete Department",
-                "View utilized Budget of Departments",
+                "View Utilized Budget of Departments",
                 "Exit"
             ]
         })
@@ -95,7 +95,7 @@ const startSystem = () => {
                     deleteDepartment();
                     break;
 
-                case "View utilized Budget of Departments":
+                case "View Utilized Budget of Departments":
                     utilizedBudget();
                     break;
 
