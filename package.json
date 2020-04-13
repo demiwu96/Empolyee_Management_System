@@ -16,5 +16,9 @@
   "bugs": {
     "url": "https://github.com/demiwu96/Empolyee_Tracker/issues"
   },
-  "homepage": "https://github.com/demiwu96/Empolyee_Tracker#readme"
+  "homepage": "https://github.com/demiwu96/Empolyee_Tracker#readme",
+  "dependencies": {
+    "inquirer": "^7.1.0",
+    "mysql": "^2.18.1"
+  }
 }
