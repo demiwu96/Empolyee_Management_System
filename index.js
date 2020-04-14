@@ -144,7 +144,7 @@ const viewAll = tableName => {
 };
 
 const viewByDepartment = () => {
-    connection.query("SELECT * FROM department", function (err, result) {
+    connection.query("SELECT * FROM department", function (err, resultD) {
         if (err) throw err;
         // prompt the user for the department 
         inquirer
@@ -155,29 +155,36 @@ const viewByDepartment = () => {
                     message: "Which department?",
                     choices: function () {
                         var choiceArray = [];
-                        for (var i = 0; i < result.length; i++) {
-                            choiceArray.push(result[i].department_name);
+                        for (var i = 0; i < resultD.length; i++) {
+                            choiceArray.push(resultD[i].department_name);
                         }
                         return choiceArray;
                     },
                 })
             .then(res => {
-                var chosen;
-                for (var i = 0; i < result.length; i++) {
-                    if (result[i].department_name === res.chooseDepartment) {
-                        chosen = result[i];
-                    }
-                }
-                // get all employees in the chosen department through department id
-                connection.query(
-                    "SELECT employee.id, employee.first_name, employee.last_name,department.department_name, role.title, role.salary FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id WHERE department.id = ?",
-                    [chosen.id], function (err, res) {
-                        if (err) throw err;
-                        console.table(res);
-                        console.log("========================================================================================");
-                        startSystem();
-                    }
-                );
+                getAndRenderByDepartment(res);
+            });
+    });
+};
+
+const getAndRenderByDepartment = inquirerRes => {
+    connection.query("SELECT * FROM department", function (err, resultD) {
+        if (err) throw err;
+        // get department information from database
+        var chosen;
+        for (var i = 0; i < resultD.length; i++) {
+            if (resultD[i].department_name === inquirerRes.chooseDepartment) {
+                chosen = resultD[i];
+            }
+        }
+        // show all employees with id of the chosen department
+        connection.query(
+            "SELECT employee.id, employee.first_name, employee.last_name,department.department_name, role.title, role.salary FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id WHERE department.id = ?",
+            [chosen.id], function (err, res) {
+                if (err) throw err;
+                console.table(res);
+                console.log("========================================================================================");
+                startSystem();
             });
     });
 };
@@ -202,26 +209,33 @@ const viewByManager = () => {
                 },
             )
             .then(res => {
-                // get manager information from database
-                let nameM = res.chooseManager.split(" ");
-                let chosenM;
-                for (var i = 0; i < resultM.length; i++) {
-                    if (resultM[i].first_name === nameM[0]) {
-                        chosenM = resultM[i];
-                    }
-                };
-                // show all employees with id of the chosen manager
-                connection.query(
-                    "SELECT employee.id, employee.first_name, employee.last_name, role.title FROM employee JOIN role ON employee.role_id = role.id WHERE manager_id = ?",
-                    [chosenM.id], function (err, res) {
-                        if (err) throw err;
-                        console.table(res);
-                        console.log("========================================================================================");
-                        startSystem();
-                    });
+                getAndRenderByManager(res);
             });
     });
 };
+
+const getAndRenderByManager = inquirerRes => {
+    connection.query("SELECT * FROM employee WHERE manager_or_not = 1", function (err, resultM) {
+        if (err) throw err;
+        // get manager information from database
+        let nameM = inquirerRes.chooseManager.split(" ");
+        let chosenM;
+        for (var i = 0; i < resultM.length; i++) {
+            if (resultM[i].first_name === nameM[0]) {
+                chosenM = resultM[i];
+            }
+        };
+        // show all employees with id of the chosen manager
+        connection.query(
+            "SELECT employee.id, employee.first_name, employee.last_name, role.title FROM employee JOIN role ON employee.role_id = role.id WHERE manager_id = ?",
+            [chosenM.id], function (err, res) {
+                if (err) throw err;
+                console.table(res);
+                console.log("========================================================================================");
+                startSystem();
+            });
+    });
+}
 
 const addEmployee = () => {
     connection.query("SELECT * FROM employee", function (err, resultE) {
