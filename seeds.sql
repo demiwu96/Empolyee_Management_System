@@ -23,6 +23,7 @@ id INT AUTO_INCREMENT NOT NULL,
 first_name VARCHAR(30) NOT NULL,
 last_name VARCHAR(30) NOT NULL,
 role_id INT,
+manager_or_not BOOLEAN DEFAULT false,
 manager_id INT NULL,
 PRIMARY KEY (id),
 FOREIGN KEY (role_id) REFERENCES role(id)

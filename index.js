@@ -111,7 +111,7 @@ const viewAll = tableName => {
     switch (tableName) {
         case "employee":
             // get employee information from database
-            query = "SELECT employee.id, employee.first_name, employee.last_name,employee.manager_id, department_name, role.title, role.salary FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id ORDER BY id"
+            query = "SELECT employee.id, employee.first_name, employee.last_name,employee.manager_id, department.department_name, role.title, role.salary FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id ORDER BY employee.id"
             connection.query(query, (err, res) => {
                 if (err) throw err;
                 console.table(res);
