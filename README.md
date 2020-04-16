@@ -33,6 +33,11 @@ Based on the user's choice, additional information inputs may be required.
     * [inquirer](https://www.npmjs.com/package/inquirer)
     * [mysql](https://www.npmjs.com/package/mysql)
 
+Run the following commend in the terminal to install the required npm:
+```sh
+npm install
+```
+
 ## Built with
 * JavaScript
 * Node.js
